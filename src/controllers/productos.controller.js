@@ -10,7 +10,7 @@ import {
 
 export async function crear(req, res) {
   try {
-    const uid = req.headers.uid;
+    const uid = req.user.uid;
     const producto = await crearProducto(uid, req.body);
     res.json(producto);
   } catch (e) {
@@ -19,13 +19,13 @@ export async function crear(req, res) {
 }
 
 export async function listar(req, res) {
-  const uid = req.headers.uid;
+  const uid = req.user.uid;
   const data = await listarProductos(uid);
   res.json(data);
 }
 
 export async function qr(req, res) {
-  const uid = req.headers.uid;
+  const uid = req.user.uid;
   const { id } = req.params;
   const { codigoQR } = req.body;
 
@@ -33,10 +33,10 @@ export async function qr(req, res) {
   res.json({ ok: true });
 }
 
-// ➕ sumar 1 paquete completo
+// ➕ sumar 1 paquete
 export async function sumar(req, res) {
   try {
-    const uid = req.headers.uid;
+    const uid = req.user.uid;
     const { id } = req.params;
 
     const r = await sumarPaquete(uid, id);
@@ -46,10 +46,10 @@ export async function sumar(req, res) {
   }
 }
 
-// ➖ restar 1 paquete completo
+// ➖ restar 1 paquete
 export async function restar(req, res) {
   try {
-    const uid = req.headers.uid;
+    const uid = req.user.uid;
     const { id } = req.params;
 
     const r = await restarPaquete(uid, id);
@@ -62,7 +62,7 @@ export async function restar(req, res) {
 // 🎯 setear stock exacto
 export async function actualizarStock(req, res) {
   try {
-    const uid = req.headers.uid;
+    const uid = req.user.uid;
     const { id } = req.params;
     const { stockUnidades } = req.body;
 

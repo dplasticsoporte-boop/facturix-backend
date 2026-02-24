@@ -3,7 +3,7 @@ import { crearVenta } from "../services/ventas.service.js";
 
 export async function crearVentaController(req, res) {
   try {
-    const uid = req.headers.uid;
+    const uid = req.user.uid; // 🔐 UID seguro desde Firebase
     const { productos } = req.body;
 
     if (!productos || productos.length === 0) {
