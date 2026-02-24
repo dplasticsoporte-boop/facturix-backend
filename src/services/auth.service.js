@@ -1,19 +1,19 @@
 import admin from "../firebase.js";
 import fetch from "node-fetch";
 
-/* ===== HELPERS ===== */
+/* ================= HELPERS ================= */
 
-// Sanitiza SOLO strings de login (defensa básica)
+// Sanitiza strings (defensa básica)
 function sanitizeInput(input) {
   return String(input).replace(/[<>]/g, "").trim();
 }
 
-// validar email
+// Validar email
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// verificar captcha (si lo usas)
+// Verificar reCAPTCHA (opcional)
 async function verifyCaptcha(token) {
   if (!token) return false;
 
@@ -33,8 +33,10 @@ async function verifyCaptcha(token) {
   return data.success === true;
 }
 
-/* ===== LOGIN ===== */
+/* ================= LOGIN ================= */
+
 export async function login(email, password) {
+
   const cleanEmail = sanitizeInput(email);
   const cleanPassword = sanitizeInput(password);
 
@@ -61,6 +63,10 @@ export async function login(email, password) {
   if (!res.ok)
     throw new Error("Credenciales inválidas");
 
+  // 🔒 Bloqueo si no activó la cuenta
+  if (!data.emailVerified)
+    throw new Error("Cuenta no activada. Revisa tu correo.");
+
   return {
     uid: data.localId,
     email: data.email,
@@ -68,7 +74,8 @@ export async function login(email, password) {
   };
 }
 
-/* ===== REGISTRO ===== */
+/* ================= REGISTRO ================= */
+
 export async function register(email, password, captcha) {
 
   if (!validateEmail(email))
@@ -77,20 +84,27 @@ export async function register(email, password, captcha) {
   if (password.length < 6)
     throw new Error("La contraseña debe tener mínimo 6 caracteres");
 
-  // si usas captcha, se valida aquí
+  // reCAPTCHA opcional
   if (captcha) {
     const isHuman = await verifyCaptcha(captcha);
     if (!isHuman)
       throw new Error("Captcha inválido");
   }
 
+  // 1️⃣ Crear usuario en Firebase (NO verificado)
   const user = await admin.auth().createUser({
     email,
-    password
+    password,
+    emailVerified: false
   });
 
+  // 2️⃣ Generar link de verificación
+  const link = await admin.auth().generateEmailVerificationLink(email);
+
+  // 3️⃣ Enviar correo (por ahora en consola)
+  console.log("🔗 LINK DE ACTIVACIÓN:", link);
+
   return {
-    uid: user.uid,
-    email: user.email
+    message: "Cuenta creada. Revisa tu correo para activarla."
   };
 }
