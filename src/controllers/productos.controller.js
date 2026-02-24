@@ -1,4 +1,3 @@
-// backend/src/controllers/productos.controller.js
 import {
   crearProducto,
   listarProductos,
@@ -33,26 +32,38 @@ export async function qr(req, res) {
   res.json({ ok: true });
 }
 
-// ➕ sumar 1 paquete
+// ➕ sumar paquetes (hasta 10)
 export async function sumar(req, res) {
   try {
     const uid = req.user.uid;
     const { id } = req.params;
+    const { cantidad } = req.body; // Obtener la cantidad de paquetes
 
-    const r = await sumarPaquete(uid, id);
+    // Validar que la cantidad esté entre 1 y 10
+    if (typeof cantidad !== 'number' || cantidad < 1 || cantidad > 10) {
+      return res.status(400).json({ error: 'La cantidad debe ser un número entre 1 y 10' });
+    }
+
+    const r = await sumarPaquete(uid, id, cantidad); // Pasar cantidad a la función de servicio
     res.json(r);
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
 }
 
-// ➖ restar 1 paquete
+// ➖ restar paquetes (hasta 10)
 export async function restar(req, res) {
   try {
     const uid = req.user.uid;
     const { id } = req.params;
+    const { cantidad } = req.body; // Obtener la cantidad de paquetes
 
-    const r = await restarPaquete(uid, id);
+    // Validar que la cantidad esté entre 1 y 10
+    if (typeof cantidad !== 'number' || cantidad < 1 || cantidad > 10) {
+      return res.status(400).json({ error: 'La cantidad debe ser un número entre 1 y 10' });
+    }
+
+    const r = await restarPaquete(uid, id, cantidad); // Pasar cantidad a la función de servicio
     res.json(r);
   } catch (e) {
     res.status(400).json({ error: e.message });

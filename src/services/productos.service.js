@@ -1,4 +1,3 @@
-// backend/src/services/productos.service.js
 import { db } from "../firebase.js";
 
 /* ==============================
@@ -52,46 +51,45 @@ export async function asignarQR(uid, id, codigoQR) {
 }
 
 /* ==============================
-   SUMAR PAQUETE
+   SUMAR PAQUETE (AHORA CON CANTIDAD)
 ================================ */
-export async function sumarPaquete(uid, id) {
+export async function sumarPaquete(uid, id, cantidad) {
   const ref = db.ref(`usuarios/${uid}/productos/${id}`);
   const snap = await ref.get();
   if (!snap.exists()) throw new Error("Producto no existe");
 
   const p = snap.val();
 
+  // Sumar la cantidad de unidades correspondientes
   const stockUnidades =
-    (p.stockUnidades || 0) + p.unidadesPorPaquete;
+    (p.stockUnidades || 0) + cantidad * p.unidadesPorPaquete;
 
-  const paquetes = Math.floor(
-    stockUnidades / p.unidadesPorPaquete
-  );
+  const paquetes = Math.floor(stockUnidades / p.unidadesPorPaquete);
 
   await ref.update({ stockUnidades, paquetes });
   return { stockUnidades, paquetes };
 }
 
 /* ==============================
-   RESTAR PAQUETE
+   RESTAR PAQUETE (AHORA CON CANTIDAD)
 ================================ */
-export async function restarPaquete(uid, id) {
+export async function restarPaquete(uid, id, cantidad) {
   const ref = db.ref(`usuarios/${uid}/productos/${id}`);
   const snap = await ref.get();
   if (!snap.exists()) throw new Error("Producto no existe");
 
   const p = snap.val();
 
-  if ((p.stockUnidades || 0) < p.unidadesPorPaquete) {
-    throw new Error("No hay stock suficiente para restar un paquete");
+  // Verificar que haya suficiente stock para restar la cantidad
+  if ((p.stockUnidades || 0) < cantidad * p.unidadesPorPaquete) {
+    throw new Error("No hay stock suficiente para restar los paquetes solicitados");
   }
 
+  // Restar la cantidad de unidades correspondientes
   const stockUnidades =
-    p.stockUnidades - p.unidadesPorPaquete;
+    p.stockUnidades - cantidad * p.unidadesPorPaquete;
 
-  const paquetes = Math.floor(
-    stockUnidades / p.unidadesPorPaquete
-  );
+  const paquetes = Math.floor(stockUnidades / p.unidadesPorPaquete);
 
   await ref.update({ stockUnidades, paquetes });
   return { stockUnidades, paquetes };
