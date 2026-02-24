@@ -3,7 +3,7 @@ import { login, register } from "../services/auth.service.js";
 
 const router = express.Router();
 
-/* ===== LOGIN ===== */
+/* ================= LOGIN ================= */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -15,11 +15,12 @@ router.post("/login", async (req, res) => {
     res.json(user);
 
   } catch (e) {
-    res.status(401).json({ error: "Credenciales inválidas" });
+    // 🔥 DEVOLVER EL ERROR REAL
+    res.status(401).json({ error: e.message });
   }
 });
 
-/* ===== REGISTRO ===== */
+/* ================= REGISTRO ================= */
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -27,8 +28,8 @@ router.post("/register", async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ error: "Datos incompletos" });
 
-    const user = await register(email, password);
-    res.json(user);
+    const result = await register(email, password);
+    res.json(result);
 
   } catch (e) {
     res.status(400).json({ error: e.message });
