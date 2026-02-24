@@ -2,13 +2,13 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function testMail(req, res) {
+const testMail = async (req, res) => {
   try {
     const { data, error } = await resend.emails.send({
       from: "POS Facturix <onboarding@resend.dev>",
-      to: "dplastic.soporte@gmail.com", // ← cámbialo
+      to: "TU_CORREO_REAL@gmail.com",
       subject: "TEST RESEND",
-      html: "<h1>Si ves esto, Resend FUNCIONA</h1>"
+      html: "<h1>Si ves este correo, Resend SÍ funciona</h1>"
     });
 
     if (error) {
@@ -17,9 +17,11 @@ export async function testMail(req, res) {
     }
 
     console.log("✅ RESEND OK:", data);
-    res.json(data);
-  } catch (e) {
-    console.error("🔥 EXCEPTION:", e);
-    res.status(500).json(e);
+    res.json({ ok: true, data });
+  } catch (err) {
+    console.error("🔥 EXCEPTION:", err);
+    res.status(500).json({ error: err.message });
   }
-}
+};
+
+export default testMail; // 👈 ESTA LÍNEA ES LA CLAVE
