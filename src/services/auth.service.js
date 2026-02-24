@@ -1,10 +1,10 @@
 import admin from "../firebase.js";
 import fetch from "node-fetch";
-import { sendVerificationEmail } from "../utils/mailer.js";
+import { sendVerificationEmail } from "./email.service.js";
 
 /* ================= HELPERS ================= */
 
-// Sanitiza strings (defensa básica)
+// Sanitizar input (básico)
 function sanitizeInput(input) {
   return String(input).replace(/[<>]/g, "").trim();
 }
@@ -26,7 +26,6 @@ export async function login(email, password) {
 
   const apiKey = process.env.FIREBASE_API_KEY;
 
-  // 🔐 Login Firebase REST
   const res = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
     {
@@ -45,11 +44,8 @@ export async function login(email, password) {
   if (!res.ok)
     throw new Error("Credenciales inválidas");
 
-  // 🔎 Consultar usuario real en Firebase Admin
-  const userRecord = await admin.auth().getUserByEmail(cleanEmail);
-
-  // 🔒 Bloquear si no activó el correo
-  if (!userRecord.emailVerified)
+  // 🔒 BLOQUEAR LOGIN SI NO ACTIVÓ EL CORREO
+  if (!data.emailVerified)
     throw new Error("Cuenta no activada. Revisa tu correo.");
 
   return {
@@ -63,24 +59,26 @@ export async function login(email, password) {
 
 export async function register(email, password) {
 
-  if (!validateEmail(email))
+  const cleanEmail = sanitizeInput(email);
+
+  if (!validateEmail(cleanEmail))
     throw new Error("Correo inválido");
 
   if (!password || password.length < 6)
     throw new Error("La contraseña debe tener mínimo 6 caracteres");
 
-  // 1️⃣ Crear usuario NO verificado
-  const user = await admin.auth().createUser({
-    email,
+  // 1️⃣ Crear usuario en Firebase (NO verificado)
+  await admin.auth().createUser({
+    email: cleanEmail,
     password,
     emailVerified: false
   });
 
-  // 2️⃣ Generar link de verificación
-  const link = await admin.auth().generateEmailVerificationLink(email);
+  // 2️⃣ Generar link de activación
+  const link = await admin.auth().generateEmailVerificationLink(cleanEmail);
 
   // 3️⃣ Enviar correo REAL
-  await sendVerificationEmail(email, link);
+  await sendVerificationEmail(cleanEmail, link);
 
   return {
     message: "Cuenta creada. Revisa tu correo para activarla."
