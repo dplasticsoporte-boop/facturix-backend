@@ -17,12 +17,12 @@ function validateEmail(email) {
 /* ================= LOGIN ================= */
 
 export async function login(email, password) {
-
   const cleanEmail = sanitizeInput(email);
   const cleanPassword = sanitizeInput(password);
 
-  if (!validateEmail(cleanEmail))
+  if (!validateEmail(cleanEmail)) {
     throw new Error("Correo inválido");
+  }
 
   const apiKey = process.env.FIREBASE_API_KEY;
 
@@ -41,31 +41,31 @@ export async function login(email, password) {
 
   const data = await res.json();
 
-  if (!res.ok)
+  if (!res.ok) {
     throw new Error("Credenciales inválidas");
+  }
 
-  // 🔒 BLOQUEAR LOGIN SI NO ACTIVÓ EL CORREO
-  if (!data.emailVerified)
-    throw new Error("Cuenta no activada. Revisa tu correo.");
-
+  // 🔓 PERMITIR LOGIN AUNQUE NO ESTÉ VERIFICADO
   return {
     uid: data.localId,
     email: data.email,
-    token: data.idToken
+    token: data.idToken,
+    emailVerified: data.emailVerified ?? false // 👈 info para el frontend
   };
 }
 
 /* ================= REGISTRO ================= */
 
 export async function register(email, password) {
-
   const cleanEmail = sanitizeInput(email);
 
-  if (!validateEmail(cleanEmail))
+  if (!validateEmail(cleanEmail)) {
     throw new Error("Correo inválido");
+  }
 
-  if (!password || password.length < 6)
+  if (!password || password.length < 6) {
     throw new Error("La contraseña debe tener mínimo 6 caracteres");
+  }
 
   // 1️⃣ Crear usuario en Firebase (NO verificado)
   await admin.auth().createUser({
@@ -77,7 +77,7 @@ export async function register(email, password) {
   // 2️⃣ Generar link de activación
   const link = await admin.auth().generateEmailVerificationLink(cleanEmail);
 
-  // 3️⃣ Enviar correo REAL
+  // 3️⃣ Enviar correo de verificación
   await sendVerificationEmail(cleanEmail, link);
 
   return {
